@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Тестова карта для DCCC</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
+
+<style>
+body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-serif; overflow:hidden; }
+
+#map { width:100%; height:100%; }
+
+#dark-overlay {
+  position:absolute; top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
+  opacity:0; pointer-events:none;
+  transition:opacity .35s ease;
+  z-index:100;
+}
+#dark-overlay.active { opacity:1; pointer-events:auto; }
+
+#info-panel {
+  position:absolute;
+  top:0; left:0;
+  width:50%; height:100%;
+  padding:30px;
+  box-sizing:border-box;
+  color:#fff;
+  background: rgba(0,0,0,0.85);
+  border-radius:0 0 0 0;
+  transform:translateX(-100%);
+  transition: transform .35s ease, opacity .35s ease;
+  opacity:0;
+  pointer-events:none;
+  z-index:1010;
+  overflow-y:auto;
+}
+#info-panel.active {
+  transform:translateX(0);
+  opacity:1;
+  pointer-events:auto;
+}
+
+#info-close { cursor:pointer; font-size:20px; margin-bottom:18px; }
+
+.info-img { width:50%; border-radius:8px; margin-bottom:12px; }
+
+@media (max-width:800px) {
+  #info-panel {
+    width:100%; height:50%;
+    transform:translateY(-100%);
+  }
+  #info-panel.active { transform:translateY(0); }
+  .info-img { width:150px; float:left; margin-right:15px; }
+}
+
+.custom-marker {
+  display:flex; justify-content:center; align-items:center;
+  border:3px solid #fff; border-radius:50%; box-shadow:0 3px 5px rgba(0,0,0,.3);
+  color:white; font-size:16px; transition:.2s;
+}
+.custom-marker:hover { transform:scale(1.1); }
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+<div id="dark-overlay"></div>
+
+<div id="info-panel">
+  <div id="info-close">✕ Закрити</div>
+  <h1 id="info-title"></h1>
+  <div id="info-text"></div>
+</div>
+
+<script>
+/* =======================
+   MAP INIT
+======================= */
+const map = L.map('map').setView([48.46486879, 35.05719066], 16);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+const infoPanel = document.getElementById('info-panel');
+const darkOverlay = document.getElementById('dark-overlay');
+const infoTitle = document.getElementById('info-title');
+const infoText = document.getElementById('info-text');
+const infoClose = document.getElementById('info-close');
+
+const originalCenter = map.getCenter();
+
+/* =======================
+   GOOGLE SHEETS JSON
+======================= */
+const SHEET_ID = "1kOzR-QWaQoam2Rs6Ot_6rOHfEBG2q-TZlwGoB4IGJhI";
+const GID = "0";
+
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
+
+/* -----------------------
+   PARSE COORDS
+----------------------- */
+function parseCoord(value) {
+  if (!value) return null;
+  let s = String(value).trim().replace(',', '.').replace(/[^0-9.\-]/g,'');
+  const num = parseFloat(s);
+  return isNaN(num) ? null : num;
+}
+
+/* -----------------------
+   FETCH DATA
+----------------------- */
+fetch(SHEET_URL)
+  .then(res => res.text())
+  .then(text => {
+    const json = JSON.parse(text.substring(47).slice(0,-2));
+    const rows = json.table.rows;
+    const points = rows.map(r=>{
+      const lat = parseCoord(r.c[0]?.v);
+      const lng = parseCoord(r.c[1]?.v);
+      if(lat===null || lng===null) return null;
+      return {
+        coords:[lat,lng],
+        title:r.c[2]?.v||"",
+        image:r.c[3]?.v||"",
+        text:r.c[4]?.v||"",
+        icon:r.c[5]?.v||"fa-solid fa-location-dot",
+        color:r.c[6]?.v||"#3388ff"
+      };
+    }).filter(Boolean);
+
+    addMarkers(points);
+  })
+  .catch(err=>console.error(err));
+
+/* =======================
+   MARKERS
+======================= */
+function addMarkers(points){
+  points.forEach(p=>{
+    const icon = L.divIcon({
+      html:`<div class="custom-marker" style="background:${p.color}; width:40px; height:40px;">
+             <i class="${p.icon}"></i>
+           </div>`,
+      iconSize:[40,40],
+      iconAnchor:[20,40]
+    });
+
+    const marker = L.marker(p.coords,{icon}).addTo(map);
+    marker.bindTooltip(p.title,{direction:'top', offset:[0,-20]});
+    marker.on('click', ()=>openPanel(p, marker));
+  });
+}
+
+/* =======================
+   INFO PANEL
+======================= */
+function openPanel(p, marker){
+  infoTitle.textContent = p.title;
+  infoText.innerHTML = `<img class="info-img" src="${p.image}"><div>${p.text}</div>`;
+  infoPanel.classList.add('active');
+  darkOverlay.classList.add('active');
+
+  // Пан карти без блокування панелі
+  const s = map.getSize();
+  const target = window.innerWidth<=800 ? L.point(s.x*0.5,s.y*0.75) : L.point(s.x*0.75,s.y*0.5);
+  const m = map.latLngToContainerPoint(marker.getLatLng());
+  const offset = L.point(target.x - m.x, target.y - m.y);
+  map.panBy(offset, {animate:true});
+}
+
+function closePanel(){
+  infoPanel.classList.remove('active');
+  darkOverlay.classList.remove('active');
+  map.panTo(originalCenter,{animate:true});
+}
+
+infoClose.onclick = closePanel;
+darkOverlay.onclick = closePanel;
+map.on('click', e=>{
+  if(!e.originalEvent.target.closest('.custom-marker') && infoPanel.classList.contains('active')){
+    closePanel();
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closePanel();
+});
+</script>
+
+</body>
+</html>
