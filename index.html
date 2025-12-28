@@ -148,6 +148,8 @@ fetch(SHEET_URL)
 function addMarkers(points){
   points.forEach(p=>{
     const icon = L.divIcon({
+      // Додаємо цей рядок, щоб прибрати стандартні стилі Leaflet
+      className: '', 
       html:`<div class="custom-marker" style="background:${p.color}; width:40px; height:40px;">
              <i class="${p.icon}"></i>
            </div>`,
