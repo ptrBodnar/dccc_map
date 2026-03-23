@@ -115,11 +115,31 @@ body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-s
 
 @media (max-width:800px) {
   #info-panel {
-    width:100%; height:50%;
+    width:100%;
+    height:min(56dvh, 420px);
+    max-height:56dvh;
+    padding:20px;
+    border-right:none;
+    border-bottom:1px solid rgba(255,255,255,0.12);
     transform:translateY(-100%);
   }
   #info-panel.active { transform:translateY(0); }
-  .info-img { width:150px; float:left; margin-right:15px; }
+  #info-title {
+    font-size:24px;
+    margin-bottom:16px;
+    padding-bottom:12px;
+  }
+  #info-text {
+    font-size:14px;
+    line-height:1.6;
+  }
+  .info-img {
+    width:100%;
+    max-width:none;
+    float:none;
+    display:block;
+    margin:0 0 14px 0;
+  }
 }
 
 .custom-marker {
@@ -153,6 +173,78 @@ body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-s
 .leaflet-tooltip-top.map-marker-tooltip::before {
   border-top-color: rgba(20,22,30,0.92);
 }
+
+.map-legend {
+  min-width: 220px;
+  max-width: 260px;
+  padding: 12px 14px;
+  color: rgba(245,247,255,0.96);
+  background: rgba(20,22,30,0.88);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.map-legend-title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgba(245,247,255,0.72);
+}
+
+.map-legend-list {
+  display: grid;
+  gap: 8px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-legend-marker {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  border: 1px solid rgba(255,255,255,0.26);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 999px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.28);
+  color: #f5f7ff;
+  font-size: 10px;
+}
+
+.map-legend-label {
+  font-size: 13px;
+  line-height: 1.2;
+  color: rgba(245,247,255,0.9);
+}
+
+@media (max-width:800px) {
+  .map-legend {
+    min-width: 0;
+    max-width: 190px;
+    max-height: min(38dvh, 260px);
+    padding: 10px 12px;
+  }
+
+  .map-legend-list {
+    max-height: min(28dvh, 180px);
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .map-legend-label {
+    font-size: 12px;
+  }
+}
 </style>
 </head>
 
@@ -171,9 +263,6 @@ body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-s
 /* =======================
    MAP INIT
 ======================= */
-
-// small change to start deploy
-  
 const map = L.map('map').setView([48.46486879, 35.05719066], 16);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -227,6 +316,53 @@ const TYPE_MAP = {
   education_center: { icon: 'fa-solid fa-graduation-cap',   color: '#78A8C8' },
 };
 
+const LEGEND_ITEMS = [
+  { key: 'cultural_center', label: 'Культурний центр' },
+  { key: 'theatre', label: 'Театр' },
+  { key: 'museum', label: 'Музей' },
+  { key: 'cinema', label: 'Кінотеатр' },
+  { key: 'library', label: 'Бібліотека' },
+  { key: 'arts_center', label: 'Мистецький центр' },
+  { key: 'nightclub', label: 'Нічний клуб' },
+  { key: 'music_school', label: 'Музична школа' },
+  { key: 'art gallery', label: 'Артгалерея' },
+  { key: 'community_center', label: 'Громадський центр' },
+  { key: 'education_center', label: 'Освітній центр' },
+  { key: 'art_studio', label: 'Артстудія' }
+];
+
+function renderLegend() {
+  const legend = L.control({ position: 'topright' });
+
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'map-legend leaflet-bar');
+    const itemsHtml = LEGEND_ITEMS.map(item => {
+      const typeData = TYPE_MAP[item.key] || {};
+      const icon = typeData.icon || 'fa-solid fa-location-dot';
+      const color = typeData.color || '#888888';
+
+      return `<div class="map-legend-item">
+        <div class="map-legend-marker" style="background:${color};">
+          <i class="${icon}"></i>
+        </div>
+        <div class="map-legend-label">${item.label}</div>
+      </div>`;
+    }).join('');
+
+    div.innerHTML = `<div class="map-legend-title">Легенда</div>
+      <div class="map-legend-list">${itemsHtml}</div>`;
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    return div;
+  };
+
+  legend.addTo(map);
+}
+
+renderLegend();
+
 /* -----------------------
    FETCH DATA
 ----------------------- */
@@ -244,8 +380,6 @@ fetch(SHEET_URL)
         title:r.c[2]?.v||"",
         image:r.c[3]?.v||"",
         text:r.c[4]?.v||"",
-        iconOverride:r.c[5]?.v||null,
-        colorOverride:r.c[6]?.v||null,
         type:String(r.c[7]?.v||"").trim().toLowerCase()
       };
     }).filter(Boolean);
@@ -260,8 +394,8 @@ fetch(SHEET_URL)
 function addMarkers(points){
   points.forEach(p=>{
     const typeData = TYPE_MAP[p.type] || {};
-    const iconClass = p.iconOverride || typeData.icon || 'fa-solid fa-location-dot';
-    const color = p.colorOverride || typeData.color || '#888888';
+    const iconClass = typeData.icon || 'fa-solid fa-location-dot';
+    const color = typeData.color || '#888888';
 
     const icon = L.divIcon({
       className: '', 
@@ -294,7 +428,14 @@ function openPanel(p, marker){
 
   // Пан карти без блокування панелі
   const s = map.getSize();
-  const target = window.innerWidth<=800 ? L.point(s.x*0.5,s.y*0.75) : L.point(s.x*0.75,s.y*0.5);
+  const isMobile = window.innerWidth <= 800;
+  const target = isMobile
+    ? (() => {
+        const panelHeight = infoPanel.offsetHeight;
+        const visibleMapHeight = Math.max(s.y - panelHeight, s.y * 0.25);
+        return L.point(s.x * 0.5, panelHeight + visibleMapHeight * 0.5);
+      })()
+    : L.point(s.x * 0.75, s.y * 0.5);
   const m = map.latLngToContainerPoint(marker.getLatLng());
   const offset = L.point(target.x - m.x, target.y - m.y);
   map.panBy(offset, {animate:true});
