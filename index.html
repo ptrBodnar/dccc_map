@@ -372,18 +372,17 @@ let activePanelType = null;
    TYPE CONFIG
 ======================= */
 const TYPE_MAP = {
-  cultural_center:  { icon: 'fa-solid fa-landmark', color: '#8B7EC8' },
-  theatre:          { icon: 'fa-solid fa-masks-theater', color: '#C87E8B' },
-  museum:           { icon: 'fa-solid fa-building-columns', color: '#7EA8C8' },
-  cinema:           { icon: 'fa-solid fa-film', color: '#C8A87E' },
-  library:          { icon: 'fa-solid fa-book-open', color: '#7EC8A8' },
-  arts_center:      { icon: 'fa-solid fa-palette', color: '#C8C87E' },
-  nightclub:        { icon: 'fa-solid fa-music', color: '#B87EC8' },
-  music_school:     { icon: 'fa-solid fa-guitar', color: '#C8957E' },
-  "art gallery":    { icon: 'fa-solid fa-paintbrush', color: '#7EC8C8' },
-  community_center: { icon: 'fa-solid fa-people-roof', color: '#8BC878' },
-  education_center: { icon: 'fa-solid fa-graduation-cap', color: '#78A8C8' },
-  art_studio:       { icon: 'fa-solid fa-paintbrush', color: '#7EC8C8' }
+  // cultural_center:  { icon: 'fa-solid fa-landmark', color: '#e0e855' },
+  theatre:          { icon: 'fa-solid fa-masks-theater', color: '#5e0f0f' },
+  museum:           { icon: 'fa-solid fa-building-columns', color: '#490054' },
+  cinema:           { icon: 'fa-solid fa-film', color: '#f2bff8' },
+  library:          { icon: 'fa-solid fa-book-open', color: '#9B0100' },
+  cultural_center:      { icon: 'fa-solid fa-palette', color: '#e0e855' },
+  nightclub:        { icon: 'fa-solid fa-music', color: '#FC4B4C' },
+  // music_school:     { icon: 'fa-solid fa-guitar', color: '#C8957E' },
+  gallery:    { icon: 'fa-solid fa-paintbrush', color: '#03A775' },
+  // community_center: { icon: 'fa-solid fa-people-roof', color: '#8BC878' },
+  education_center: { icon: 'fa-solid fa-graduation-cap', color: '#2C1B83' },
 };
 
 const TYPE_LABELS = {
@@ -392,13 +391,13 @@ const TYPE_LABELS = {
   museum: "Музей",
   cinema: "Кінотеатр",
   library: "Бібліотека",
-  arts_center: "Мистецький центр",
-  nightclub: "Нічний клуб",
+  cultural_center: "Культурний центр",
+  nightclub: "Музичний простір",
   music_school: "Музична школа",
-  "art gallery": "Артгалерея",
-  community_center: "Громадський центр",
+  gallery: "Галерея",
+  // community_center: "Громадський центр",
   education_center: "Освітній центр",
-  art_studio: "Артстудія"
+  // art_studio: "Артстудія"
 };
 
 const activeTypes = new Set();
