@@ -6,245 +6,313 @@
 <title>Тестова карта для DCCC</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
 
 <style>
 body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-serif; overflow:hidden; }
-
 #map { width:100%; height:100%; }
 
 #dark-overlay {
-  position:absolute; top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
-  opacity:0; pointer-events:none;
-  transition:opacity .35s ease;
-  z-index:100;
+  position:absolute;
+  inset:0;
+  background:rgba(34,37,36,0.16);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s ease;
+  z-index:900;
 }
-#dark-overlay.active { 
-  opacity:1; 
+
+#dark-overlay.active {
+  opacity:1;
   pointer-events:auto;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
 }
 
 #info-panel {
   position:absolute;
   top:0; left:0;
-  width:50%; height:100%;
-  padding:30px;
-  box-sizing:border-box;
-  color:#fff;
-  background: linear-gradient(to right, rgba(28,28,38,0.92), rgba(15,15,25,0.85));
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border-right: 1px solid rgba(255,255,255,0.15);
-  border-radius:0 0 0 0;
+  width:min(640px, 46%);
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background:#ffffff;
+  border-right:1px solid #e0e0e0;
   transform:translateX(-100%);
-  transition: transform .35s ease, opacity .35s ease;
+  transition:transform .32s ease, opacity .32s ease;
   opacity:0;
   pointer-events:none;
   z-index:1010;
-  overflow-y:auto;
-  box-shadow: 
-    inset 1px 0 0 rgba(255,255,255,0.05),
-    0 8px 32px rgba(0,0,0,0.5), 
-    0 2px 8px rgba(0,0,0,0.3);
+  overflow:hidden;
 }
+
 #info-panel.active {
   transform:translateX(0);
   opacity:1;
   pointer-events:auto;
 }
 
-#info-close { 
-  cursor:pointer; 
-  font-size:16px; 
-  margin-bottom:18px;
-  display: inline-block;
-  padding: 10px 18px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  font-weight: 500;
+#info-close {
+  position:absolute;
+  top:18px;
+  right:18px;
+  cursor:pointer;
+  font-size:18px;
+  color:#555;
+  line-height:1;
+  z-index:1;
+  transition:color .15s ease;
+  user-select:none;
 }
+
 #info-close:hover {
-  background: rgba(255,255,255,0.2);
-  transform: translateY(-1px);
+  color:#000;
+}
+
+#info-content {
+  flex:1;
+  overflow-y:auto;
+  padding:56px 40px 40px;
 }
 
 #info-title {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin:0 0 36px;
+  padding-right:36px;
+  color:#1a1a1a;
+  font-size:32px;
+  font-weight:700;
+  letter-spacing:-0.03em;
+  line-height:1.15;
 }
 
-#info-text {
-  line-height: 1.7;
-  font-size: 15px;
-  color: rgba(255,255,255,0.9);
+#info-meta-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px 32px;
+  margin-bottom:36px;
+  padding-bottom:32px;
+  border-bottom:1px solid #ebebeb;
 }
 
-.info-img { 
-  width:50%; 
-  border-radius:12px; 
-  margin-bottom:16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+.meta-label {
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  color:#aaa;
+  margin-bottom:5px;
+  letter-spacing:0.06em;
 }
 
-#info-panel::-webkit-scrollbar { 
-  width: 8px; 
+.meta-value {
+  font-size:15px;
+  color:#1a1a1a;
+  line-height:1.45;
 }
-#info-panel::-webkit-scrollbar-track { 
-  background: rgba(255,255,255,0.05);
-  border-radius: 4px;
+
+#info-description {
+  font-size:15px;
+  color:#444;
+  line-height:1.75;
+  white-space:pre-line;
+  overflow-wrap:break-word;
+  word-break:break-word;
 }
-#info-panel::-webkit-scrollbar-thumb { 
-  background: rgba(255,255,255,0.2); 
-  border-radius: 4px;
-  transition: background 0.2s;
+
+#info-image-strip {
+  flex-shrink:0;
+  position:relative;
+  height:30vh;
+  overflow:hidden;
 }
-#info-panel::-webkit-scrollbar-thumb:hover { 
-  background: rgba(255,255,255,0.3); 
+
+#info-strip-img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+#info-img-caption {
+  position:absolute;
+  bottom:0; left:0; right:0;
+  padding:8px 14px;
+  background:rgba(0,0,0,0.45);
+  color:#fff;
+  font-size:11px;
+  line-height:1.4;
 }
 
 @media (max-width:800px) {
   #info-panel {
     width:100%;
-    height:min(56dvh, 420px);
-    max-height:56dvh;
-    padding:20px;
+    height:min(60dvh, 480px);
+    max-height:60dvh;
     border-right:none;
-    border-bottom:1px solid rgba(255,255,255,0.12);
+    border-bottom:1px solid #e0e0e0;
     transform:translateY(-100%);
   }
+
+  #info-content { padding:44px 24px 28px; }
   #info-panel.active { transform:translateY(0); }
-  #info-title {
-    font-size:24px;
-    margin-bottom:16px;
-    padding-bottom:12px;
+  #info-title { font-size:24px; margin-bottom:24px; }
+  #info-image-strip { height:15vh; }
+}
+
+/* === ПОШУК === */
+#search-bar {
+  position:absolute;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(400px, calc(100% - 280px));
+  background:#fff;
+  border-radius:28px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.14);
+  display:flex;
+  align-items:center;
+  padding:0 14px;
+  gap:8px;
+  z-index:1000;
+}
+
+#search-icon {
+  color:#aaa;
+  font-size:14px;
+  flex-shrink:0;
+}
+
+#search-input {
+  border:none;
+  outline:none;
+  font-family:inherit;
+  font-size:14px;
+  flex:1;
+  height:42px;
+  background:transparent;
+  color:#1a1a1a;
+}
+
+#search-input::placeholder { color:#bbb; }
+
+#search-clear {
+  cursor:pointer;
+  color:#aaa;
+  font-size:14px;
+  flex-shrink:0;
+  user-select:none;
+  transition:color .15s;
+}
+
+#search-clear:hover { color:#555; }
+
+#search-results {
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0; right:0;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.12);
+  overflow:hidden;
+  max-height:320px;
+  overflow-y:auto;
+}
+
+.search-result-item {
+  padding:12px 16px;
+  cursor:pointer;
+  border-bottom:1px solid #f0f0f0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  transition:background .12s;
+}
+
+.search-result-item:last-child { border-bottom:none; }
+.search-result-item:hover { background:#f7f7f7; }
+
+.search-result-title {
+  font-size:14px;
+  font-weight:600;
+  color:#1a1a1a;
+}
+
+.search-result-sub {
+  font-size:12px;
+  color:#888;
+}
+
+.search-result-item.no-results {
+  color:#aaa;
+  font-size:14px;
+  padding:14px 16px;
+  cursor:default;
+}
+
+.search-result-item.no-results:hover { background:transparent; }
+
+@media (max-width:800px) {
+  #search-bar {
+    width:calc(100% - 32px);
+    border-radius:20px;
   }
-  #info-text {
-    font-size:14px;
-    line-height:1.6;
-  }
-  .info-img {
-    width:100%;
-    max-width:none;
-    float:none;
-    display:block;
-    margin:0 0 14px 0;
-  }
 }
 
-.custom-marker {
-  display:flex; justify-content:center; align-items:center;
-  border:1px solid rgba(255,255,255,0.35);
-  border-radius:50%;
-  box-shadow: inset 0 0 0 999px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.35);
-  color:#f5f7ff;
-  font-size:13px;
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-.custom-marker:hover { 
-  transform:scale(1.08);
-  box-shadow: inset 0 0 0 999px rgba(0,0,0,0.18), 0 4px 10px rgba(0,0,0,0.35);
-}
-
-.leaflet-tooltip.map-marker-tooltip {
-  background: rgba(20,22,30,0.92);
-  color: rgba(245,247,255,0.95);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.1px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.leaflet-tooltip-top.map-marker-tooltip::before {
-  border-top-color: rgba(20,22,30,0.92);
-}
-
+/* === ЛЕГЕНДА === */
 .map-legend {
-  min-width: 220px;
-  max-width: 260px;
-  padding: 12px 14px;
-  color: rgba(245,247,255,0.96);
-  background: rgba(20,22,30,0.88);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.32);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:1000;
+  min-width:200px;
+  padding:14px 16px;
+  color:#1a1a1a;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.12);
+  max-height:calc(100vh - 20px);
+  overflow-y:auto;
 }
 
 .map-legend-title {
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: rgba(245,247,255,0.72);
-}
-
-.map-legend-list {
-  display: grid;
-  gap: 8px;
+  margin-bottom:12px;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:#aaa;
 }
 
 .map-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+  cursor:pointer;
+  font-size:13px;
+  color:#333;
+  transition:opacity .2s;
+}
+
+.map-legend-item:last-child { margin-bottom:0; }
+
+.map-legend-item:not(.active) {
+  opacity:0.35;
 }
 
 .map-legend-marker {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 24px;
-  border: 1px solid rgba(255,255,255,0.26);
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 999px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.28);
-  color: #f5f7ff;
-  font-size: 10px;
+  width:24px;
+  height:24px;
+  flex-shrink:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:10px;
 }
 
-.map-legend-label {
-  font-size: 13px;
-  line-height: 1.2;
-  color: rgba(245,247,255,0.9);
-}
-
-@media (max-width:800px) {
-  .map-legend {
-    min-width: 0;
-    max-width: 190px;
-    max-height: min(38dvh, 260px);
-    padding: 10px 12px;
-  }
-
-  .map-legend-list {
-    max-height: min(28dvh, 180px);
-    overflow-y: auto;
-    padding-right: 2px;
-  }
-
-  .map-legend-label {
-    font-size: 12px;
-  }
-}
 </style>
 </head>
 
@@ -253,209 +321,391 @@ body, html { margin:0; padding:0; height:100%; font-family:'Google Sans', sans-s
 <div id="map"></div>
 <div id="dark-overlay"></div>
 
+<div id="search-bar">
+  <i class="fa-solid fa-magnifying-glass" id="search-icon"></i>
+  <input id="search-input" type="text" placeholder="Пошук об'єктів..." autocomplete="off" />
+  <div id="search-clear" hidden>✕</div>
+  <div id="search-results" hidden></div>
+</div>
+<div class="map-legend" id="legend" style="display:none">
+  <div class="map-legend-title">Фільтр</div>
+  <div id="legend-items"></div>
+</div>
+
 <div id="info-panel">
-  <div id="info-close">✕ Закрити</div>
-  <h1 id="info-title"></h1>
-  <div id="info-text"></div>
+  <div id="info-close">✕</div>
+  <div id="info-content">
+    <h1 id="info-title"></h1>
+    <div id="info-meta-grid"></div>
+    <div id="info-description"></div>
+  </div>
+  <div id="info-image-strip" hidden>
+    <img id="info-strip-img" alt="" />
+    <div id="info-img-caption"></div>
+  </div>
 </div>
 
 <script>
-/* =======================
-   MAP INIT
-======================= */
-const map = L.map('map').setView([48.46486879, 35.05719066], 16);
+const map = new maplibregl.Map({
+  container: 'map',
+  style: './styles/minimal-light.json',
+  center: [35.0572, 48.4648],
+  zoom: 16
+});
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, 
-  attribution: '&copy; OpenStreetMap &copy; CartoDB'
-}).addTo(map);
+map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
 const infoPanel = document.getElementById('info-panel');
 const darkOverlay = document.getElementById('dark-overlay');
 const infoTitle = document.getElementById('info-title');
-const infoText = document.getElementById('info-text');
+const infoMetaGrid = document.getElementById('info-meta-grid');
+const infoDescription = document.getElementById('info-description');
+const infoImageStrip = document.getElementById('info-image-strip');
+const infoStripImg = document.getElementById('info-strip-img');
+const infoImgCaption = document.getElementById('info-img-caption');
 const infoClose = document.getElementById('info-close');
-
-const originalCenter = map.getCenter();
+const legend = document.getElementById('legend');
+const legendItems = document.getElementById('legend-items');
+let activePanelType = null;
 
 /* =======================
-   GOOGLE SHEETS JSON
+   TYPE CONFIG
 ======================= */
-const SHEET_ID = "1kOzR-QWaQoam2Rs6Ot_6rOHfEBG2q-TZlwGoB4IGJhI";
-const GID = "0";
+const TYPE_MAP = {
+  cultural_center:  { icon: 'fa-solid fa-landmark', color: '#8B7EC8' },
+  theatre:          { icon: 'fa-solid fa-masks-theater', color: '#C87E8B' },
+  museum:           { icon: 'fa-solid fa-building-columns', color: '#7EA8C8' },
+  cinema:           { icon: 'fa-solid fa-film', color: '#C8A87E' },
+  library:          { icon: 'fa-solid fa-book-open', color: '#7EC8A8' },
+  arts_center:      { icon: 'fa-solid fa-palette', color: '#C8C87E' },
+  nightclub:        { icon: 'fa-solid fa-music', color: '#B87EC8' },
+  music_school:     { icon: 'fa-solid fa-guitar', color: '#C8957E' },
+  "art gallery":    { icon: 'fa-solid fa-paintbrush', color: '#7EC8C8' },
+  community_center: { icon: 'fa-solid fa-people-roof', color: '#8BC878' },
+  education_center: { icon: 'fa-solid fa-graduation-cap', color: '#78A8C8' },
+  art_studio:       { icon: 'fa-solid fa-paintbrush', color: '#7EC8C8' }
+};
 
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
+const TYPE_LABELS = {
+  cultural_center: "Культурний центр",
+  theatre: "Театр",
+  museum: "Музей",
+  cinema: "Кінотеатр",
+  library: "Бібліотека",
+  arts_center: "Мистецький центр",
+  nightclub: "Нічний клуб",
+  music_school: "Музична школа",
+  "art gallery": "Артгалерея",
+  community_center: "Громадський центр",
+  education_center: "Освітній центр",
+  art_studio: "Артстудія"
+};
 
-/* -----------------------
-   PARSE COORDS
------------------------ */
+const activeTypes = new Set();
+let allPoints = [];
+
+/* =======================
+   PARSE
+======================= */
 function parseCoord(value) {
   if (!value) return null;
-  let s = String(value).trim().replace(',', '.').replace(/[^0-9.\-]/g,'');
+  let s = String(value).replace(',', '.').replace(/[^0-9.\-]/g,'');
   const num = parseFloat(s);
   return isNaN(num) ? null : num;
 }
 
 /* =======================
-   TYPE → ICON MAP
+   DATA
 ======================= */
-const TYPE_MAP = {
-  cultural_center:  { icon: 'fa-solid fa-landmark',        color: '#8B7EC8' },
-  theatre:          { icon: 'fa-solid fa-masks-theater',    color: '#C87E8B' },
-  museum:           { icon: 'fa-solid fa-building-columns', color: '#7EA8C8' },
-  cinema:           { icon: 'fa-solid fa-film',             color: '#C8A87E' },
-  library:          { icon: 'fa-solid fa-book-open',        color: '#7EC8A8' },
-  arts_center:      { icon: 'fa-solid fa-palette',          color: '#C8C87E' },
-  arts_centre:      { icon: 'fa-solid fa-palette',          color: '#C8C87E' },
-  nightclub:        { icon: 'fa-solid fa-music',            color: '#B87EC8' },
-  music_school:     { icon: 'fa-solid fa-guitar',           color: '#C8957E' },
-  'art gallery':    { icon: 'fa-solid fa-paintbrush',       color: '#7EC8C8' },
-  art_studio:       { icon: 'fa-solid fa-paintbrush',       color: '#7EC8C8' },
-  community_center: { icon: 'fa-solid fa-people-roof',      color: '#8BC878' },
-  community_centre: { icon: 'fa-solid fa-people-roof',      color: '#8BC878' },
-  education_center: { icon: 'fa-solid fa-graduation-cap',   color: '#78A8C8' },
-};
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1kOzR-QWaQoam2Rs6Ot_6rOHfEBG2q-TZlwGoB4IGJhI/gviz/tq?tqx=out:json";
 
-const LEGEND_ITEMS = [
-  { key: 'cultural_center', label: 'Культурний центр' },
-  { key: 'theatre', label: 'Театр' },
-  { key: 'museum', label: 'Музей' },
-  { key: 'cinema', label: 'Кінотеатр' },
-  { key: 'library', label: 'Бібліотека' },
-  { key: 'arts_center', label: 'Мистецький центр' },
-  { key: 'nightclub', label: 'Нічний клуб' },
-  { key: 'music_school', label: 'Музична школа' },
-  { key: 'art gallery', label: 'Артгалерея' },
-  { key: 'community_center', label: 'Громадський центр' },
-  { key: 'education_center', label: 'Освітній центр' },
-  { key: 'art_studio', label: 'Артстудія' }
-];
+map.on('load', () => {
+  addDniproBoundary();
 
-function renderLegend() {
-  const legend = L.control({ position: 'topright' });
+  fetch(SHEET_URL)
+    .then(res => res.text())
+    .then(text => {
+      const json = JSON.parse(text.substring(47).slice(0,-2));
+      const rows = json.table.rows;
 
-  legend.onAdd = function () {
-    const div = L.DomUtil.create('div', 'map-legend leaflet-bar');
-    const itemsHtml = LEGEND_ITEMS.map(item => {
-      const typeData = TYPE_MAP[item.key] || {};
-      const icon = typeData.icon || 'fa-solid fa-location-dot';
-      const color = typeData.color || '#888888';
+      const points = rows.map(r=>{
+        const lat = parseCoord(r.c[0]?.v);
+        const lng = parseCoord(r.c[1]?.v);
+        if(lat===null || lng===null) return null;
 
-      return `<div class="map-legend-item">
-        <div class="map-legend-marker" style="background:${color};">
-          <i class="${icon}"></i>
-        </div>
-        <div class="map-legend-label">${item.label}</div>
-      </div>`;
-    }).join('');
+        return {
+          coords:[lng,lat],
+          title:r.c[2]?.v||"",
+          image:r.c[3]?.v||"",
+          text:r.c[4]?.v||"",
+          author:String(r.c[5]?.v||""),
+          year:String(r.c[6]?.v||""),
+          type:String(r.c[7]?.v||"").toLowerCase().trim(),
+          address:String(r.c[8]?.v||""),
+          status:String(r.c[9]?.v||"")
+        };
+      }).filter(Boolean);
 
-    div.innerHTML = `<div class="map-legend-title">Легенда</div>
-      <div class="map-legend-list">${itemsHtml}</div>`;
-
-    L.DomEvent.disableClickPropagation(div);
-    L.DomEvent.disableScrollPropagation(div);
-
-    return div;
-  };
-
-  legend.addTo(map);
-}
-
-renderLegend();
-
-/* -----------------------
-   FETCH DATA
------------------------ */
-fetch(SHEET_URL)
-  .then(res => res.text())
-  .then(text => {
-    const json = JSON.parse(text.substring(47).slice(0,-2));
-    const rows = json.table.rows;
-    const points = rows.map(r=>{
-      const lat = parseCoord(r.c[0]?.v);
-      const lng = parseCoord(r.c[1]?.v);
-      if(lat===null || lng===null) return null;
-      return {
-        coords:[lat,lng],
-        title:r.c[2]?.v||"",
-        image:r.c[3]?.v||"",
-        text:r.c[4]?.v||"",
-        type:String(r.c[7]?.v||"").trim().toLowerCase()
-      };
-    }).filter(Boolean);
-
-    addMarkers(points);
-  })
-  .catch(err=>console.error(err));
+      allPoints = points;
+      addPointsLayer(points);
+      renderLegend();
+      legend.style.display = 'block';
+    })
+    .catch(err => console.error('Помилка завантаження даних:', err));
+});
 
 /* =======================
-   MARKERS
+   DNIPRO BOUNDARY
 ======================= */
-function addMarkers(points){
-  points.forEach(p=>{
-    const typeData = TYPE_MAP[p.type] || {};
-    const iconClass = typeData.icon || 'fa-solid fa-location-dot';
-    const color = typeData.color || '#888888';
+function addDniproBoundary() {
+  map.addSource('dnipro-boundary', {
+    type: 'geojson',
+    data: './data/dnipro-boundary.geojson'
+  });
 
-    const icon = L.divIcon({
-      className: '', 
-      html:`<div class="custom-marker" style="background:${color}; width:32px; height:32px;">
-             <i class="${iconClass}"></i>
-           </div>`,
-      iconSize:[32,32],
-      iconAnchor:[16,32]
-    });
+  map.addLayer({
+    id: 'dnipro-boundary-fill',
+    type: 'fill',
+    source: 'dnipro-boundary',
+    paint: {
+      'fill-color': '#8fbfbd',
+      'fill-opacity': 0
+    }
+  });
 
-    const marker = L.marker(p.coords,{icon}).addTo(map);
-    marker.bindTooltip(p.title,{
-      direction:'top',
-      offset:[0,-14],
-      className:'map-marker-tooltip',
-      sticky:true
-    });
-    marker.on('click', ()=>openPanel(p, marker));
+  map.addLayer({
+    id: 'dnipro-boundary-line',
+    type: 'line',
+    source: 'dnipro-boundary',
+    paint: {
+      'line-color': '#ababab',
+      'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 13, 2, 16, 3.2],
+      // 'line-dasharray': [2, 1.2],
+      'line-opacity': 0.9,
+    }
+  });
+}
+
+/* =======================
+   MARKERS (GL layer)
+======================= */
+function addPointsLayer(points) {
+  const geojson = {
+    type: 'FeatureCollection',
+    features: points.map((p, idx) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: p.coords },
+      properties: {
+        idx,
+        type: p.type,
+        color: TYPE_MAP[p.type]?.color || '#888',
+        title: p.title
+      }
+    }))
+  };
+
+  map.addSource('points', { type: 'geojson', data: geojson });
+
+  map.addLayer({
+    id: 'points-layer',
+    type: 'circle',
+    source: 'points',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 14, 17, 16],
+      'circle-color': ['get', 'color'],
+      'circle-stroke-width': 0,
+      'circle-opacity': 0.92
+    }
   });
 }
 
 /* =======================
    INFO PANEL
 ======================= */
-function openPanel(p, marker){
+function openPanel(p) {
+  activePanelType = p.type || 'other';
+
   infoTitle.textContent = p.title;
-  infoText.innerHTML = `<img class="info-img" src="${p.image}"><div>${p.text}</div>`;
+
+  infoMetaGrid.innerHTML = '';
+  const typeLabel = TYPE_LABELS[p.type] || p.type || '';
+  [
+    ['Рік', p.year],
+    ['Тип', typeLabel],
+    ['Адреса', p.address],
+    ['Статус', p.status]
+  ].forEach(([label, value]) => {
+    const item = document.createElement('div');
+    item.className = 'meta-item';
+    item.innerHTML = `<div class="meta-label">${label}</div><div class="meta-value">${value || '—'}</div>`;
+    infoMetaGrid.appendChild(item);
+  });
+
+  infoDescription.innerHTML = p.text || '';
+
+  if (p.image) {
+    infoStripImg.src = p.image;
+    infoImgCaption.textContent = p.title;
+    infoImageStrip.hidden = false;
+  } else {
+    infoImageStrip.hidden = true;
+  }
+
   infoPanel.classList.add('active');
   darkOverlay.classList.add('active');
-
-  // Пан карти без блокування панелі
-  const s = map.getSize();
-  const isMobile = window.innerWidth <= 800;
-  const target = isMobile
-    ? (() => {
-        const panelHeight = infoPanel.offsetHeight;
-        const visibleMapHeight = Math.max(s.y - panelHeight, s.y * 0.25);
-        return L.point(s.x * 0.5, panelHeight + visibleMapHeight * 0.5);
-      })()
-    : L.point(s.x * 0.75, s.y * 0.5);
-  const m = map.latLngToContainerPoint(marker.getLatLng());
-  const offset = L.point(target.x - m.x, target.y - m.y);
-  map.panBy(offset, {animate:true});
 }
 
-function closePanel(){
+function closePanel() {
   infoPanel.classList.remove('active');
   darkOverlay.classList.remove('active');
-  map.panTo(originalCenter,{animate:true});
+  activePanelType = null;
 }
 
 infoClose.onclick = closePanel;
 darkOverlay.onclick = closePanel;
-map.on('click', e=>{
-  if(!e.originalEvent.target.closest('.custom-marker') && infoPanel.classList.contains('active')){
-    closePanel();
-  }
+map.on('click', e => {
+  const hits = map.queryRenderedFeatures(e.point, { layers: ['points-layer'] });
+  if (hits.length === 0) closePanel();
 });
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape') closePanel();
+map.on('click', 'points-layer', e => {
+  const p = allPoints[e.features[0].properties.idx];
+  openPanel(p);
+  map.flyTo({
+    center: p.coords,
+    zoom: map.getZoom() < 15 ? 16 : map.getZoom(),
+    speed: 1.2,
+    padding: { left: infoPanel.offsetWidth, top: 0, right: 0, bottom: 0 }
+  });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+
+map.on('mouseenter', 'points-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+map.on('mouseleave', 'points-layer', () => { map.getCanvas().style.cursor = ''; });
+
+/* =======================
+   CLICKABLE LEGEND
+======================= */
+function renderLegend() {
+  legendItems.innerHTML = '';
+  activeTypes.clear();
+
+  const presentTypes = [...new Set(allPoints.map(p => p.type).filter(Boolean))];
+
+  presentTypes.forEach(type => {
+    const typeData = TYPE_MAP[type] || {};
+    const color = typeData.color || '#888';
+    const label = TYPE_LABELS[type] || type;
+
+    activeTypes.add(type);
+
+    const item = document.createElement('div');
+    item.className = 'map-legend-item active';
+    item.dataset.type = type;
+    item.innerHTML = `
+      <div class="map-legend-marker" style="background:${color}"></div>
+      <div>${label}</div>
+    `;
+
+    item.addEventListener('click', event => {
+      event.stopPropagation();
+      const isActive = item.classList.contains('active');
+
+      if (isActive) activeTypes.delete(type); else activeTypes.add(type);
+
+      map.setFilter('points-layer', [
+        'in', ['get', 'type'], ['literal', [...activeTypes]]
+      ]);
+
+      if (isActive && activePanelType === type) closePanel();
+      item.classList.toggle('active');
+    });
+
+    legendItems.appendChild(item);
+  });
+}
+/* =======================
+   SEARCH
+======================= */
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+const searchResults = document.getElementById('search-results');
+
+function stripHtml(str) {
+  return str.replace(/<[^>]*>/g, ' ');
+}
+
+function searchPoints(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return allPoints.filter(p =>
+    p.title.toLowerCase().includes(q) ||
+    stripHtml(p.text).toLowerCase().includes(q)
+  );
+}
+
+function renderSearchResults(results) {
+  searchResults.innerHTML = '';
+
+  if (results.length === 0) {
+    const item = document.createElement('div');
+    item.className = 'search-result-item no-results';
+    item.textContent = 'Нічого не знайдено';
+    searchResults.appendChild(item);
+  } else {
+    results.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+      const label = TYPE_LABELS[p.type] || p.type || '';
+      item.innerHTML = `
+        <div class="search-result-title">${p.title}</div>
+        ${label ? `<div class="search-result-sub">${label}</div>` : ''}
+      `;
+      item.addEventListener('click', () => {
+        openPanel(p);
+        map.flyTo({
+          center: p.coords,
+          zoom: 17,
+          speed: 1.4,
+          padding: { left: infoPanel.offsetWidth, top: 0, right: 0, bottom: 0 }
+        });
+        closeSearchResults();
+        searchInput.value = '';
+        searchClear.hidden = true;
+      });
+      searchResults.appendChild(item);
+    });
+  }
+
+  searchResults.hidden = false;
+}
+
+function closeSearchResults() {
+  searchResults.hidden = true;
+}
+
+searchInput.addEventListener('input', () => {
+  const val = searchInput.value;
+  if (!val.trim()) {
+    closeSearchResults();
+    searchClear.hidden = true;
+    return;
+  }
+  searchClear.hidden = false;
+  renderSearchResults(searchPoints(val));
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchClear.hidden = true;
+  closeSearchResults();
+  searchInput.focus();
+});
+
+document.addEventListener('click', e => {
+  if (!searchBar.contains(e.target)) closeSearchResults();
 });
 </script>
 
