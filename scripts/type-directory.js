@@ -42,18 +42,9 @@ async function loadTypeDirectory() {
       LABELS[type] = [config.ua || fallback[0], config.en || fallback[1]];
     });
 
-    const refreshMap = () => {
-      if (!map?.getSource('points')) {
-        window.setTimeout(refreshMap, 100);
-        return;
-      }
-      map.getSource('points').setData(dataFor(points));
-      renderFilters();
-    };
-    refreshMap();
   } catch (error) {
     console.warn('Не вдалося завантажити довідник типів. Використано fallback-палітру.', error);
   }
 }
 
-loadTypeDirectory();
+window.typeDirectoryReady = loadTypeDirectory();
