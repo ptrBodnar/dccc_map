@@ -1,0 +1,20 @@
+.expand-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.8;
+}
+
+.map-expand:hover { background: var(--accent); }
+
+.filter-swatch {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border: 1px solid rgba(23, 26, 24, .28);
+  border-radius: 50%;
+}
